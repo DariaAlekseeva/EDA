@@ -1,7 +1,10 @@
 # EDA
 ### Udacity Course
 
-## Link to EDA publications:
+Reposetory contains code files for Exploratory Data Analysis in different ares.
+Below are links to my publications, above - its .rmd and .htlm files. 
+
+## Links to EDA publications:
 
 * Red and White Wine Quality https://rpubs.com/Daria/53624
 * Diamond Dataset https://rpubs.com/Daria/53416
