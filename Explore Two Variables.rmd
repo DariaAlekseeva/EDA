@@ -1,0 +1,360 @@
+Lesson 4
+========================================================
+
+```{r}
+setwd("D:/R/Udacity/EDA_Course_Materials/lesson4")
+library(dplyr)
+```
+
+
+### Scatterplots
+Notes:
+
+```{r Scatterplots}
+library(ggplot2)
+pf <- read.csv('pseudo_facebook.tsv', sep = '\t')
+
+qplot(x = age, y = friend_count, data = pf)
+
+# equvivalent
+ggplot(aes(x = age, y = friend_count), data = pf) + geom_point() 
+```
+
+***
+
+#### What are some things that you notice right away?
+Response:
+Mostly people under 25 have biggest number of friends, but people who said they are around 75 and over 100 also have quite high density of friends. Probably this is fake age which young people put for fun
+***
+
+### ggplot Syntax
+Notes:
+
+```{r ggplot Syntax}
+qplot(x = age, y = friend_count, data = pf)
+
+ggplot(aes(x = age, y = friend_count), data = pf) + 
+    geom_point() +
+    xlim(13,90)
+
+summary(pf$age)
+```
+
+***
+
+### Overplotting
+Notes:
+
+
+```{r Overplotting}
+ggplot(aes(x = age, y = friend_count), data = pf) + 
+    geom_jitter(alpha = 1/20) +
+    xlim(13,90)
+
+summary(pf$age)
+```
+
+#### What do you notice in the plot?
+Response:
+On average people don't have more than 200 friends. But people younger than 30 have friends number of friends around 500. "Line" around 65 year old users looks like "line" for 25 year old users.
+***
+
+### Coord_trans()
+Notes:
+
+```{r Coord_trans()}
+ggplot(aes(x = age, y = friend_count), data = pf) + 
+    geom_point(alpha = 1/20) +
+    xlim(13,90) +
+    coord_trans(y = "sqrt")
+```
+
+#### Look up the documentation for coord_trans() and add a layer to the plot that transforms friend_count using the square root function. Create your plot!
+
+```{r}
+ggplot(aes(x = age, y = friend_count), data = pf) + 
+    geom_point(alpha = 1/20, position = position_jitter(h = 0)) +
+    xlim(13,90) +
+    coord_trans(y = "sqrt")
+```
+
+#### What do you notice?
+There are just a few users above 1000 threshold.
+***
+
+### Alpha and Jitter
+Notes:
+Let's xxamine the relationship between friendships_initiated (y) and age (x) using the ggplot syntax.
+
+```{r Alpha and Jitter}
+ggplot(aes(x = age, y = friendships_initiated), data = pf) + 
+    geom_jitter(alpha = 1/20, position = position_jitter(h = 0)) +
+    xlim(13,90) +
+    coord_trans( y = 'sqrt')
+```
+
+***
+
+### Overplotting and Domain Knowledge
+Notes:
+
+***
+
+### Conditional Means
+Notes:
+
+```{r Conditional Means}
+library(dplyr)
+
+age_groups <- group_by(pf, age)
+pf.fc_by_age <- summarise(age_groups, friend_count_mean = mean(friend_count),
+          friend_count_median = median(friend_count),
+          n = n())
+pf.fc_by_age <- arrange(pf.fc_by_age, age)
+
+head(pf.fc_by_age)
+
+
+pf.fc_by_age <- pf %>%
+    group_by(age) %>%
+    summarise(friend_count_mean = mean(friend_count),
+          friend_count_median = median(friend_count),
+          n = n()) %>%
+    arrange(age)
+
+head(pf.fc_by_age)
+```
+
+Create your plot!
+
+```{r Conditional Means Plot}
+names(pf.fc_by_age)
+ggplot(aes(x = age, y = friend_count_mean), data = pf.fc_by_age) +
+    geom_line()
+```
+
+***
+
+### Overlaying Summaries with Raw Data
+Notes:
+
+```{r Overlaying Summaries with Raw Data}
+ggplot(aes(x = age, y = friend_count), data = pf) + 
+    geom_point(alpha = 0.05, position = position_jitter(h = 0),
+    color = "orange") +
+    geom_line(stat = 'summary', fun.y = mean) +
+    geom_line(stat = 'summary', fun.y = quantile, probs = .1, linetype = 2, color = "blue") +
+        geom_line(stat = 'summary', fun.y = quantile, probs = .5, color = "blue") +
+    geom_line(stat = 'summary', fun.y = quantile, probs = .9, linetype = 2, color = "blue") +
+    coord_cartesian(xlim = c(13,70), ylim = c(13,1000))
+```
+
+#### What are some of your observations of the plot?
+Response:
+Almost nobody has over 1000 friends, even young users. 90% of users are below 1000. 90% of users between 35 and 65 have less than 250 friens.
+***
+
+### Moira: Histogram Summary and Scatterplot
+See the Instructor Notes of this video to download Moira's paper on perceived audience size and to see the final plot.
+
+Notes:
+
+***
+
+### Correlation
+Notes:
+
+```{r Correlation}
+cor.test(pf$age, pf$friend_count, method = 'pearson')
+#or
+with(pf, cor.test(age, friend_count, method = 'pearson'))
+```
+
+Look up the documentation for the cor.test function.
+
+What's the correlation between age and friend count? Round to three decimal places.
+Response:
+-0.02740737 
+***
+
+### Correlation on Subsets
+Notes:
+
+```{r Correlation on Subsets}
+with(subset(pf, age <= 70), cor.test(age, friend_count))
+```
+
+***
+
+### Correlation Methods
+Notes:
+
+***
+
+## Create Scatterplots
+Notes:
+
+```{r}
+ggplot(aes(x = www_likes_received, y = likes_received), data = pf) +
+    geom_point(alpha = 0.05, color = "blue") +
+    coord_cartesian(xlim = c(0,3000), ylim = c(0,5000))
+```
+
+***
+
+### Strong Correlations
+Notes:
+
+```{r Strong Correlations}
+ggplot(aes(x = www_likes_received, y = likes_received), data = pf) +
+    geom_point(alpha = 0.05, color = "blue") +
+    xlim(0, quantile(pf$www_likes_received, 0.95)) + 
+    ylim(0, quantile(pf$likes_received, 0.95)) +
+    geom_smooth(method = 'lm', color = 'red')
+```
+
+What's the correlation betwen the two variables? Include the top 5% of values for the variable in the calculation and round to 3 decimal places.
+
+```{r Correlation Calcuation}
+cor.test(pf$www_likes_received, pf$likes_received)
+
+```
+
+Response:
+
+Pearson's product-moment correlation
+
+data:  pf$www_likes_received and pf$likes_received
+t = 937.1035, df = 99001, p-value < 2.2e-16
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.9473553 0.9486176
+sample estimates:
+      cor 
+0.9479902 
+***
+
+
+### More Caution with Correlation
+Notes:
+
+```{r More Caution With Correlation}
+library(alr3)
+```
+
+Create your plot!
+
+```{r Temp vs Month}
+ggplot(aes(x = Month, y = Temp), data = Mitchell) +
+    geom_point()
+```
+
+***
+
+### Noisy Scatterplots
+a. Take a guess for the correlation coefficient for the scatterplot.
+
+Looks like there is no correlation between Month and Temp
+
+b. What is the actual correlation of the two variables?
+(Round to the thousandths place)
+
+```{r Noisy Scatterplots}
+cor.test(Mitchell$Month, Mitchell$Temp)
+```
+
+***
+
+### Making Sense of Data
+Notes:
+
+```{r Making Sense of Data}
+ggplot(aes(x = Month, y = Temp), data = Mitchell) +
+    geom_point() +
+    scale_x_discrete(breaks = seq(0,203,12))
+```
+
+***
+
+### A New Perspective
+
+What do you notice?
+Response:
+There is the same wave like cyclical patern each year.
+
+Watch the solution video and check out the Instructor Notes!
+Notes:
+
+***
+
+### Understanding Noise: Age to Age Months
+Notes:
+
+```{r Understanding Noise_Age to Age Months}
+ggplot(aes(x = age, y = friend_count_mean),
+   data = pf.fc_by_age) +
+   geom_line() 
+
+head(pf.fc_by_age,10)
+pf.fc_by_age[17:19, ]
+
+```
+
+```{r Create an age_with_months variable}
+pf$age_with_months <- pf$age + (12 - pf$dob_month) / 12
+```
+
+***
+
+### Age with Months Means
+
+```{r Age with Months Means}
+pf.fc_by_age_month <- pf %>%
+    group_by(age_with_months) %>%
+    summarise(friend_count_mean = mean(friend_count),
+              friend_count_median = median(friend_count),
+              n = n()) %>%
+    arrange(age_with_months)
+```
+
+
+### Noise in Conditional Means
+```{r Programming Assignment}
+ggplot(aes
+       (x = age_with_months, y = friend_count_mean),
+        data = subset(pf.fc_by_age_month, age_with_months < 71)) +
+   geom_line() 
+```
+
+
+### Smoothing Conditional Means
+Notes:
+
+```{r Smoothing Conditional Means}
+p1 <- ggplot(aes(x = age, y = friend_count_mean),
+   data = subset(pf.fc_by_age, age < 71)) +
+   geom_line() +
+   geom_smooth()
+
+p2 <- ggplot(aes
+       (x = age_with_months, y = friend_count_mean),
+        data = subset(pf.fc_by_age_month, age_with_months < 71)) +
+   geom_line() +
+   geom_smooth()
+
+p3 <- ggplot(aes
+       (x = round(age / 5) * 5, y = friend_count),
+        data = subset(pf, age < 71)) +
+   geom_line(stat = "summary", fun.y = mean)
+
+library(gridExtra)
+grid.arrange(p2, p1, p3, ncol = 1)
+```
+
+***
+
+### Which Plot to Choose?
+Notes:
+We don't need to choose one plot.
+Different visualisations tells us different details about data.
+***

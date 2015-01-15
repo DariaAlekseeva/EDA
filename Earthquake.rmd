@@ -1,0 +1,142 @@
+Earthquakes: consequences of disasters
+====================================================================
+
+```{r}
+setwd("D:/R/Udacity/EDA_Course_Materials/lesson4")
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+## Affected and killed by earthquakes
+```{r}
+#read two files
+affected <- read.csv("indicator_earthquake affected - Data.csv", header = TRUE, row.names = 1)
+killed <- read.csv("indicator_earthquake killed - Data.csv", header = TRUE, row.names = 1)
+```
+
+```{r}
+#add new columns to both dataset which represent casualties and countries
+affected['casualty'] = 'affected'
+affected['country'] <- row.names(affected)
+killed['casualty'] = 'killed'
+killed['country'] <- row.names(killed)
+```
+
+```{r}
+#making tidydata 
+tidy_affected <- gather(affected, year, total, -casualty, - country)
+tidy_killed <- gather(killed, year, total, -casualty, - country)
+```
+
+```{r}
+#merge two datasets
+data <- rbind(tidy_affected, tidy_killed)
+
+#correct year names
+data['year'] <- extract_numeric(data$year)
+
+#adjust total column by converting into thousands and replacing 0 value with 1
+data['total'] <- (data$total/1000) + 1
+```
+
+## Explore total number of affected and killed people (in thousands)
+We can see that max value of 'total' is very far from mean value. when we make a plot we can see that we have two outliers.
+```{r}
+summary(data$total)
+
+ggplot(aes(x=year, y = total), data = data) +  
+    geom_point() + 
+    scale_y_continuous(breaks = seq(0,47180,10000), lim = c(1.002,47180)) +
+    scale_x_continuous(breaks=seq(1970,2008,2))
+```
+
+
+## Transform data 
+Let's transform data to make it dispersed. Now we can see better distribution of earthquakes in the world
+```{r}
+ggplot(aes(x=year, y = total), data = data) +
+    geom_point() + 
+    scale_y_continuous(breaks = seq(0,47180,10000), lim = c(1.002,47180)) +
+    scale_x_continuous(breaks=seq(1970,2008,2)) +  
+    coord_trans(y = "log10")
+```
+
+Let's check correlation between earthquakes and years.
+
+```{r}
+cor.test(data$total, data$year)
+```
+There is no coorelation between earthquakes and years as is was expected.
+
+## Earthquakes by casualty 
+When data is grouped by casualty we can see that number of people affected by earthquake is much higher than number of killed people
+
+```{r}
+ggplot(aes(x=year, y = total), data = data) +
+    geom_point(aes(colour=casualty, group= casualty)) + 
+    scale_y_continuous(breaks = seq(0,47180,10000), lim = c(1.002,47180)) +
+    scale_x_continuous(breaks=seq(1970,2008,5)) + 
+    coord_trans(y = "log10") +
+    labs(title = "Earthquakes by casualty")
+```
+
+## Top 10 earthquakes by number of affected people (in thousands)
+```{r}
+top_af <- head(data[order(-data$total),],10)
+top_af
+```
+
+## Top 10 earthquakes by number of killed people (in thousands)
+```{r}
+top_killed<-filter(data, casualty == "killed")
+top_killed<-head(arrange(top_killed, -total), 10)
+top_killed
+```
+
+## Most seismoactive countries
+Let's create a vector with unique values which represents most seismoactive countries according two top_affected and top_killed
+```{r}
+danger <- unique(c(top_af$country, top_killed$country))
+danger
+length(danger)
+danger_set<-filter(data, country == danger)
+```
+
+Let's plot data of most dangerous seismoactive countries
+```{r}
+ggplot(aes(x=year, y = total), data = danger_set) +
+    geom_point(aes(colour=country, group= country, size = sqrt(total))) +
+    scale_size_area() +
+    coord_trans(y = "log10") +
+    scale_y_continuous(lim = c(1.002,47180)) +
+    scale_x_continuous(breaks=seq(1970,2008,5))    
+```
+
+We cannot see very well earthquakes' sizes of most countries so let's zoom in our plot and look at affected and killed seperately
+```{r}
+ggplot(aes(x=year, y = total), data = top_af) +
+    geom_point(aes(colour=country, group= country, size = sqrt(total))) +
+    scale_size_area() +
+    coord_trans(y = "log10") +
+    scale_x_continuous(breaks=seq(1970,2008,5)) +
+    labs(title = "Earthquakes' size and country, by affected people in thousands")
+
+ggplot(aes(x=year, y = total), data = top_killed) +
+    geom_point(aes(colour=country, group= country, size = sqrt(total))) +
+    scale_size_area() +
+    coord_trans(y = "log10") +
+    scale_x_continuous(breaks=seq(1970,2008,5))+
+    labs(title = "Earthquakes' size and country, by killed people in thousands")
+```
+
+
+```{r, fig.width = 10, fig.height = 5}
+country_set<-filter(data, country == danger)
+
+ggplot(aes(x=year, y = total), data = country_set) +
+    geom_point(color = "red") +
+    geom_smooth() +
+    facet_wrap(~country, ncol=4, scale = "free_y")
+```
+
