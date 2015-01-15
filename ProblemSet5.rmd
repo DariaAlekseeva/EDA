@@ -1,0 +1,84 @@
+Problem Set 5
+========================================================
+
+```{r}
+setwd("D:/R/Udacity/EDA_Course_Materials/lesson5")
+library(ggplot2)
+```
+
+## Price Histograms with Facet and Color
+
+```{r}
+ggplot(diamonds, aes(x = price, fill = factor(cut))) +
+    geom_histogram(binwidth = 200) +
+    facet_wrap( ~ color) +
+    scale_fill_brewer(type = 'qual')
+```
+
+## Price vs. Table Colored by Cut
+
+```{r}
+ggplot(diamonds, aes(x = table, y = price, color = cut)) +
+    geom_point() +
+    scale_color_brewer(type = 'qual') +
+    scale_x_continuous(breaks = seq(50,80,2), lim = c(50,80)) 
+```
+
+##  Price vs. Volume and Diamond Clarity
+
+```{r}
+diamonds$volume = diamonds$x * diamonds$y * diamonds$z
+ggplot(diamonds, aes(x = volume, y = price, color = clarity)) +
+    geom_point() +
+    scale_y_log10() +
+    scale_color_brewer(type = 'div') +
+    xlim(0, quantile(diamonds$volume, 0.99))
+```
+
+## Proportion of Friendships Initiated
+Many interesting variables are derived from two or more others.
+For example, we might wonder how much of a person's network on a service like Facebook the user actively initiated. Two users with the same degree (or number of friends) might be very different if one initiated most of those connections on the service, while the other initiated very few. So it could be useful to consider this proportion of existing friendships that the user initiated. This might be a good predictor of how active a user is compared with their peers, or other traits, such as personality (i.e., is this person an extrovert?).
+
+```{r}
+pf <- read.csv('pseudo_facebook.tsv', sep = '\t')
+pf$prop_initiated = pf$friendships_initiated / pf$friend_count
+```
+
+## prop_initiated vs. tenure
+
+```{r}
+pf$year_joined <- floor(2014 - pf$tenure/365)
+pf$year_joined.bucket <- cut(pf$year_joined, c(2004, 2009, 2011, 2012, 2014))
+
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), aes(x = tenure, y = prop_initiated, color = year_joined.bucket)) +
+    geom_line(stat = 'summary', fun.y = mean)
+```
+
+
+##  Smoothing prop_initiated vs. tenure
+
+```{r}
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), aes(x = tenure, y = prop_initiated, color = year_joined.bucket)) +
+    geom_line(stat = 'summary', fun.y = mean) +
+    geom_smooth()
+```
+
+## Largest Group Mean prop_initiated
+Proportion of friendships initated for the group with the largest proportion of friendships initiated is 0.66.
+
+This group's proportion is quite high because people who joined later (after 2012) initially have more friends to add because many of their friends are already on FB.
+
+```{r}
+subs<-subset(pf, year_joined > 2012)
+mean(subs$prop_initiated, na.rm = T)
+```
+
+## Price/Carat Binned, Faceted, & Colored
+
+```{r}
+ggplot(diamonds, aes(x = cut, y = price/carat)) +
+    geom_point(aes(color = diamonds$color), alpha = (1/2), position = position_jitter(width = 0.3)) +
+    facet_wrap( ~ clarity) +
+    scale_color_brewer(type = 'div')
+```
+

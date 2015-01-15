@@ -1,0 +1,240 @@
+
+```{r}
+setwd("D:/R/Udacity/EDA_Course_Materials/lesson3")
+```
+
+
+Lesson 3
+============================
+## Reading in Data
+    
+    
+```{r}
+getwd()
+list.files()
+pf <- read.csv('pseudo_facebook.tsv', sep = '\t')
+library(ggplot2)
+library(ggthemes)
+names(pf)
+#theme_set(theme_minimal(24))
+#qplot(x = dob_day, data = pf)
+ggplot(aes(x = dob_day), data = pf) + 
+    geom_histogram() + 
+    scale_x_discrete(breaks = 1:31) +
+    facet_wrap(~dob_month, ncol=3)
+
+```
+
+## Count friends
+
+```{r}
+qplot(x = friend_count, data = pf, xlim = c(0,1000))
+# another way to do a histogram:
+qplot(x = friend_count, data = na.omit(pf), binwidth = 10) + 
+    scale_x_continuous(lim = c(0,1000), breaks = seq(0, 1000, 50)) +
+    facet_wrap(~gender)
+
+```
+
+
+## Statistics 'by' Gender
+
+```{r}
+table(pf$gender)
+by(pf$friend_count, pf$gender, summary)
+```
+
+
+## Tenure
+```{r}
+qplot(x = tenure/365, data = pf, binwidth = .25,
+      xlab = 'Number of years using Facebook',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#F79420')) +
+    scale_x_continuous(lim = c(0,7), breaks = seq(0, 7, 1))
+```
+
+
+## Age
+```{r}
+qplot(x=age, data = pf, binwidth = 5,
+      xlab = 'Age of Facebook users',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I("#FF9999")) +
+    scale_x_continuous(lim=c(13,80), breaks = seq(13,80,10))
+```
+
+## Transforming Data
+## Scaled data
+
+```{r}
+library(gridExtra)
+p1 = qplot(x = friend_count, data = pf)
+p2 = qplot(x = log10(friend_count +1), data = pf)
+p3 = qplot(x = sqrt(friend_count), data = pf)
+# arrange plots in grid
+grid.arrange(p1, p2, p3, ncol = 3)
+```
+
+## Frequency Polygons (before we had histograms)
+```{r}
+qplot(x = friend_count, data = subset(pf, !is.na(gender)), biwidth = 10) +
+    scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50)) +
+    facet_wrap(~gender)
+
+qplot(x = friend_count, y = ..count../sum(..count..),
+      data = subset(pf, !is.na(gender)),
+      xlab = "Friend Count",
+      ylab = "Proportion of Users with that friend count",
+      biwidth = 10, geom = "freqpoly", color = gender) +
+    scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50))
+```
+
+## Frequency Polygons (who has more likes)
+```{r}
+qplot(x = www_likes, 
+      data = subset(pf, !is.na(gender)),
+      geom = "freqpoly", color = gender) +
+    scale_x_continuous() +
+    scale_x_log10()
+```
+
+
+## Statistics of likes 'by' Gender
+
+```{r}
+by(pf$www_likes, pf$gender, sum)
+```
+
+## Box Plots
+```{r}
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+    coord_cartesian(ylim = c(0,250))
+
+by(pf$friend_count, pf$gender, summary)
+```
+
+## Box Plots, Quartiles, Friend Requests
+```{r}
+qplot(x = gender, y = friendships_initiated,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+    coord_cartesian(ylim = c(0,130))
+
+by(pf$friendships_initiated, pf$gender, summary)
+```
+
+## Getting logical
+```{r}
+summary(pf$mobile_likes)
+
+summary(pf$mobile_likes > 0)
+
+mobile_check_in <- NA
+pf$mobile_check_in <- ifelse(pf$mobile_likes > 0,1,0)
+pf$mobile_check_in <- factor(pf$mobile_check_in)
+summary(pf$mobile_check_in)
+```
+
+## Price Histogram
+```{r}
+library(ggplot2)
+qplot(price, data = diamonds,
+      xlab = 'Price of diamond',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999"))
+
+summary(diamonds$price)
+
+```
+
+## Cheaper diamonds
+```{r}
+library(ggplot2)
+qplot(price, data = diamonds,
+      xlab = 'Price of diamond',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999"),
+      binwidth = 1) +
+  scale_x_continuous(lim = c(0, 3000), breaks = seq(0, 3000, 250))
+
+ggsave('priceHistogram.png')
+#There are no diamonds that cost $1500.
+#For diamonds that cost less than $2,000, the most common price of a diamond is around $700 with the mode being $605 (binwidth = 1). 
+```
+
+## Price by Cut Histogram
+```{r}
+library(ggplot2)
+a<-qplot(price, data = diamonds,
+      xlab = 'Price of diamond',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999")) +
+      facet_wrap(~cut, ncol = 2)
+by(diamonds$price,diamonds$cut,max)
+by(diamonds$price,diamonds$cut,min)
+by(diamonds$price,diamonds$cut,median)
+```
+
+## Scales and Multiple Histograms
+```{r}
+qplot(x = price, data = diamonds,
+      xlab = 'Price of diamond',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999")) +
+      facet_wrap(~cut, scales = "free_y")
+by(diamonds$price, diamonds$cut, summary)
+```
+
+## Price per Carat by Cut
+```{r}
+qplot(x = price/carat, data = diamonds,
+      xlab = 'Price per carat',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999"),
+      binwidth = 50) +
+      facet_wrap(~cut)
+
+
+qplot(x = price/carat, data = diamonds,
+      xlab = 'Price per carat',
+      ylab = 'Number of diamonds in sample',
+      color = I('red'), fill = I("#FF9999"),
+      binwidth = 1) +
+      facet_wrap(~cut) +
+      scale_x_log10()
+```
+
+
+## Price Box Plots by clarity
+```{r}
+qplot(x = clarity, y = price,
+      data = subset(diamonds, !is.na(clarity)),
+      geom = 'boxplot') 
+
+by(diamonds$price, diamonds$clarity, summary)
+ggsave('priceHistogrambyclarity.png')
+```
+
+## Price Box Plots by color
+```{r}
+qplot(x = color, y = price,
+      data = subset(diamonds, !is.na(color)),
+      geom = 'boxplot') 
+
+by(diamonds$price, diamonds$color, summary)
+IQR(subset(diamonds, color == "D")$price)
+IQR(subset(diamonds, color == "J")$price)
+ggsave('priceHistogrambycolor.png')
+```
+
+## Carat Frequency Polygon
+```{r}
+qplot(carat, data = diamonds, geom = "freqpoly", binwidth = 0.01)
+   
+```
+
+
+

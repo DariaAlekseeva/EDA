@@ -1,0 +1,85 @@
+```{r}
+setwd("D:/R/Udacity/EDA_Course_Materials/lesson3")
+library(knitr)
+library(ggplot2)
+library(tidyr)
+```
+## Population aged 20-39 years, both sexes (%)
+```{r}
+#read two files
+male <- read.csv("indicator_male 20-39 percen - Data.csv", header = TRUE, row.names = 1)
+female <- read.csv("indicator_female 20-39 percen - Data.csv", header = TRUE, row.names = 1)
+```
+
+```{r}
+#add new columns which represent sex
+male['sex'] = 'male'
+male['country'] <- row.names(male)
+female['sex'] = 'female'
+female['country'] <- row.names(female)
+```
+
+```{r}
+#making tidydata 
+tidymale<-gather(male, year, population, -sex, - country)
+tidyfemale<-gather(female, year, population, -sex, - country)
+```
+
+```{r}
+#merge two datasets
+data <- rbind(tidymale, tidyfemale)
+
+#correct year names
+data['year'] <- extract_numeric(data$year)
+```
+
+```{r}
+#plot of male and female population distribution all over the world
+qplot(x = year, y = population, data = data,
+      main = "World population age 20-39 in %%") + facet_wrap(~sex)
+```
+
+```{r}
+#plot of current population divided by genders
+library(dplyr)
+today<-filter(data, year == "2015")
+qplot(x= sex, y = population, data = today,
+      main = "World Male and Female population in 2015 in %%",
+      geom = 'boxplot')
+```
+
+```{r}
+#statistical summary
+by(today$population, today$sex, summary)
+
+#Population rate in Russia age 20-39 in %%
+russia<-filter(data, country == "Russia")
+qplot(x = year, y = population, data = russia,
+      main = "Population rate in Russia age 20-39 in %%",
+      geom = "freqpoly", 
+      color = sex, 
+      binwidth = 1, 
+      stat = 'identity')
+
+#Population rate in Turkey age 20-39 in %%
+turkey<-filter(data, country == "Turkey")
+qplot(x = year, y = population, data = turkey,
+      main = "Population rate in Turkey age 20-39 in %%",
+      geom = "freqpoly", 
+      color = sex, 
+      binwidth = 1, 
+      stat = 'identity')
+
+#Population rate age 20-39 in Turkey, Russia, UK and USA in %%
+new_set<-filter(data, country == "Russia" | country == "Turkey" | country == "United States" | country == "United Kingdom")
+
+by_country_year<-group_by(new_set, country, year)
+mean_pop<-summarise_each(by_country_year, funs(mean), population)
+qplot(x = year, y = population, data=mean_pop,
+      geom = "freqpoly", 
+      color = country, 
+      binwidth = 1, 
+      stat = 'identity', 
+      main = "Population rate age 20-39 in Turkey, Russia, UK and USA in %%")
+```
+
