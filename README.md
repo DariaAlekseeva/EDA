@@ -6,7 +6,7 @@ Below are links to my publications, above - its .rmd and .htlm files.
 
 ## Links to EDA publications:
 
-* Red and White Wine Quality https://rpubs.com/Daria/53624
+* Red and White Wine Quality https://rpubs.com/Daria/57835
 * Diamond Dataset https://rpubs.com/Daria/53416
 * Unemployment in the World https://rpubs.com/Daria/53320
 * Explore multivariables https://rpubs.com/Daria/53314
